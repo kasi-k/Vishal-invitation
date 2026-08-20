@@ -44,7 +44,7 @@ export default function Invitation({ open, onCelebrate }) {
               <div className="names-wrap">
                 <Script as="h1" className="crest-name" delay={0.7}>{invite.groom.name}</Script>
                 <span className="glints" aria-hidden="true">
-                  {[[16, 30], [44, 16], [72, 66], [90, 34]].map(([x, y], i) => (
+                  {[[16, 30], [44, 16], [72, 66], [90, 34], [28, 72], [58, 44]].map(([x, y], i) => (
                     <span key={i} className="glint" style={{ '--x': `${x}%`, '--y': `${y}%`, '--i': i }} />
                   ))}
                 </span>
@@ -62,8 +62,8 @@ export default function Invitation({ open, onCelebrate }) {
               <div className="names-wrap">
                 <Script as="h1" className="crest-name" delay={1.6}>{invite.bride.name}</Script>
                 <span className="glints" aria-hidden="true">
-                  {[[10, 62], [38, 22], [66, 70], [88, 28]].map(([x, y], i) => (
-                    <span key={i} className="glint" style={{ '--x': `${x}%`, '--y': `${y}%`, '--i': i + 4 }} />
+                  {[[10, 62], [38, 22], [66, 70], [88, 28], [24, 42], [76, 50]].map(([x, y], i) => (
+                    <span key={i} className="glint" style={{ '--x': `${x}%`, '--y': `${y}%`, '--i': i + 6 }} />
                   ))}
                 </span>
               </div>
@@ -82,8 +82,10 @@ export default function Invitation({ open, onCelebrate }) {
           <span className="hair" aria-hidden="true" />
 
           <div className={`when-block${whenShown ? ' in' : ''}`} ref={whenRef}>
-            <p className="when-label when-fade">Save the date</p>
+            <span className="when-rule" aria-hidden="true" />
+            <Tracked className="when-label" text="Save the date" base={0.1} step={0.03} />
             <p className="when-date">{event.dateLabel}</p>
+            <span className="when-rule" aria-hidden="true" />
             <p className="when-at when-fade">{event.timeLabel}</p>
             <p className="where when-fade">
               {event.venue}<br /><span>{event.city}</span>

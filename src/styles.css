@@ -269,13 +269,13 @@ main { position: relative; z-index: 2; }
   line-height: 1.32; padding: .08em .04em 0;
   font-size: clamp(22px, 3.6vw, 48px);
   background: linear-gradient(100deg,
-    #fdeee2 0%, #fff6ee 26%, #ffffff 40%, #fff9f3 46%,
-    #ffe9da 56%, #fff6ee 74%, #fdeee2 100%);
+    #fdeee2 0%, #f6c9a8 12%, #ffb7a3 22%, #fff6ee 32%, #ffffff 42%,
+    #fff9f3 50%, #ffd9c2 60%, #e8a9c9 70%, #fff6ee 82%, #fdeee2 100%);
   background-size: 260% 100%; background-position: 130% 0;
   -webkit-background-clip: text; background-clip: text; color: transparent;
   text-shadow: 0 5px 32px rgba(24, 10, 8, .6), 0 1px 3px rgba(24, 10, 8, .45);
 }
-.invite.in .crest-name { animation: shine 7s linear 2.4s infinite; }
+.invite.in .crest-name { animation: shine 4.2s linear 2.4s infinite; }
 /* A light band sweeping across the gradient-clipped text — the gradient
    itself (in .crest-name/.when-date) is static, this is what actually makes
    it glitter. Referenced above but never defined until now, so the names'
@@ -375,19 +375,19 @@ main { position: relative; z-index: 2; }
 .glints { position: absolute; inset: -6% -3%; pointer-events: none; }
 .glint {
   position: absolute; left: var(--x); top: var(--y);
-  width: 14px; height: 14px; margin: -7px 0 0 -7px; opacity: 0;
+  width: 18px; height: 18px; margin: -9px 0 0 -9px; opacity: 0;
   background:
-    linear-gradient(#fff, #fff) center / 100% 1.5px no-repeat,
-    linear-gradient(#fff, #fff) center / 1.5px 100% no-repeat;
+    linear-gradient(#ffe3b0, #f7a8c4) center / 100% 2px no-repeat,
+    linear-gradient(#ffe3b0, #f7a8c4) center / 2px 100% no-repeat;
   -webkit-mask: radial-gradient(closest-side, #000 0%, transparent 78%);
   mask: radial-gradient(closest-side, #000 0%, transparent 78%);
-  filter: drop-shadow(0 0 6px rgba(255, 236, 208, .95));
+  filter: drop-shadow(0 0 8px rgba(255, 190, 150, 1));
 }
-.invite.in .glint { animation: glint 3.6s ease-in-out infinite; animation-delay: calc(2.6s + var(--i) * .42s); }
+.invite.in .glint { animation: glint 2.4s ease-in-out infinite; animation-delay: calc(1.4s + var(--i) * .26s); }
 @keyframes glint {
-  0%, 72%, 100% { opacity: 0; transform: scale(.3) rotate(0deg); }
-  80%           { opacity: 1; transform: scale(1) rotate(45deg); }
-  88%           { opacity: .5; transform: scale(.7) rotate(70deg); }
+  0%, 62%, 100% { opacity: 0; transform: scale(.3) rotate(0deg); }
+  72%           { opacity: 1; transform: scale(1.15) rotate(45deg); }
+  84%           { opacity: .55; transform: scale(.75) rotate(70deg); }
 }
 
 /* ---- the invitation itself, set on the scene ------------------------------ */
@@ -433,15 +433,36 @@ main { position: relative; z-index: 2; }
   transition: opacity .8s var(--slow), transform .8s var(--slow);
 }
 .when-block.in .when-fade { opacity: 1; transform: none; }
-.when-label.when-fade { transition-delay: .05s; }
-.when-at.when-fade { transition-delay: .45s; }
-.where.when-fade { transition-delay: .6s; }
+.when-at.when-fade { transition-delay: .55s; }
+.where.when-fade { transition-delay: .7s; }
+
+/* Title-card framing, matching the intro film's opening treatment (.it-rule
+   + .it-eyebrow) so this reads as a deliberate second "title card" rather
+   than a different style bolted on. A line drawing in (not just fading) on
+   either side of the label, echoing how a film title racks into place. */
+.when-rule {
+  display: block; width: clamp(70px, 16vw, 130px); height: 1px; margin: 0 auto 10px;
+  background: linear-gradient(90deg, transparent, var(--gold-lt), transparent);
+  transform: scaleX(0); transition: transform .9s var(--slow);
+}
+.when-rule:last-of-type { margin: 10px auto 0; }
+.when-block.in .when-rule { transform: scaleX(1); }
+.when-block.in .when-rule:first-of-type { transition-delay: 0s; }
+.when-block.in .when-rule:last-of-type { transition-delay: .55s; }
 
 .when-label {
+  display: block;
   font-family: var(--serif); font-weight: 600; font-size: clamp(9.5px, 1.7cqw, 11px);
   letter-spacing: .38em; text-indent: .38em; text-transform: uppercase; color: #f0cdb8;
   text-shadow: 0 2px 12px rgba(24, 10, 8, .9);
 }
+.when-label .tl {
+  display: inline-block; opacity: 0; transform: translateY(9px);
+  transition: opacity .5s var(--ease), transform .5s var(--ease);
+  transition-delay: var(--wd, 0s);
+}
+.when-block.in .when-label .tl { opacity: 1; transform: none; }
+
 .when-date {
   font-family: var(--hand); font-size: clamp(32px, 8cqw, 56px); line-height: 1.14;
   padding-top: .04em; margin-top: 1px;
@@ -451,12 +472,13 @@ main { position: relative; z-index: 2; }
   background-size: 260% 100%; background-position: 130% 0;
   -webkit-background-clip: text; background-clip: text; color: transparent;
   text-shadow: 0 4px 26px rgba(24, 10, 8, .8);
-  opacity: 0; transform: translateY(16px) scale(.97);
-  transition: opacity 1s var(--slow) .15s, transform 1s var(--slow) .15s;
+  /* Racks into focus, title-card style, instead of a plain fade+rise. */
+  opacity: 0; filter: blur(10px); transform: scale(1.1);
+  transition: opacity 1.1s var(--slow) .45s, filter 1.1s var(--slow) .45s, transform 1.1s var(--slow) .45s;
 }
 .when-block.in .when-date {
-  opacity: 1; transform: none;
-  animation: shine 7s linear 1s infinite;
+  opacity: 1; filter: blur(0); transform: scale(1);
+  animation: shine 7s linear 1.6s infinite;
 }
 .when-at {
   font-weight: 600; font-size: clamp(13px, 2.5cqw, 15.5px); color: #fbeadb; margin-top: 2px;
@@ -758,8 +780,9 @@ main { position: relative; z-index: 2; }
   .glint { opacity: 0 !important; }
   .body [style*='--d'], .ganesha-mark, .body, .cd-cell,
   .crest-of, .crest-join, .crest-eyebrow .tl, .scene-img,
-  .when-fade, .when-date,
+  .when-fade, .when-date, .when-rule, .when-label .tl,
   .it-names, .it-when, .it-where, .it-rule {
     opacity: 1 !important; transform: none !important;
   }
+  .when-date { filter: none !important; }
 }
