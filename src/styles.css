@@ -34,9 +34,15 @@
 }
 
 * { margin: 0; box-sizing: border-box; }
-html { scroll-behavior: smooth; }
+/* Elastic/rubber-band overscroll bounce (trackpads on desktop too, not just
+   mobile) is a compositor-level effect the browser draws at the scroll
+   limits — it isn't the page's own background showing through, so no
+   background colour on html/body can match it away. Disable the bounce
+   itself instead of trying to disguise it. */
+html { scroll-behavior: smooth; overscroll-behavior-y: none; background: #140704; }
 
 body {
+  overscroll-behavior-y: none;
   background: var(--page);
   color: var(--text);
   font-family: var(--body);
@@ -185,7 +191,11 @@ main { position: relative; z-index: 2; }
     linear-gradient(180deg, rgba(30, 12, 10, .5), rgba(30, 12, 10, .12) 26%, rgba(28, 11, 9, .58) 62%, rgba(24, 9, 7, .86));
 }
 
-.invite-flow { position: relative; z-index: 1; }
+/* Guarantees the flow is at least as tall as the pinned scene (100svh) so the
+   sticky release math above always has room to work — short content (e.g. no
+   RSVP iframe) would otherwise run out before the scene does, exposing the
+   plain page background below it. */
+.invite-flow { position: relative; z-index: 1; min-height: 100svh; }
 
 /* ---- the crest, over the pinned scene ------------------------------------ */
 .crest {
@@ -229,8 +239,13 @@ main { position: relative; z-index: 2; }
   margin: clamp(10px, 1.8svh, 20px) auto 0;
 }
 
+/* Sized by content, not an even 50/50 split: "Malarvizhi Aputhiran" is much
+   longer than "Vishal Srinivasan", and an equal-width column starved the
+   longer name of room it didn't need to be denied — the row has plenty of
+   space overall once it isn't divided up front. min-width: 0 keeps a shrink
+   fallback (onto a second line, see .crest-name) for genuinely narrow rows. */
 .crest-couple .who {
-  flex: 1 1 0px;
+  flex: 0 1 auto;
   min-width: 0;
   display: flex;
   flex-direction: column;
@@ -242,9 +257,12 @@ main { position: relative; z-index: 2; }
 
 .crest-name {
   font-family: var(--hand); font-weight: 400;
-  white-space: nowrap;
-  /* Great Vibes' swashes overrun the em box and the writing-on mask is the size
-     of that box, so a tight line-height shears the tops off the capitals */
+  /* Not nowrap: "Malarvizhi Aputhiran" is much longer than "Vishal Srinivasan",
+     and this sits in a flex column with a capped max-width. Forcing one line
+     let it overflow past .invite's `overflow: clip` on ordinary desktop
+     widths — the bride's name (the right-hand column) would silently vanish
+     off the edge. Wrapping is the safe default; on typical widths it still
+     fits one line anyway. */
   line-height: 1.32; padding: .08em .04em 0;
   font-size: clamp(22px, 3.6vw, 48px);
   background: linear-gradient(100deg,
@@ -454,7 +472,6 @@ main { position: relative; z-index: 2; }
   font-family: var(--serif); font-size: 11.5px; font-weight: 600;
   letter-spacing: .3em; text-indent: .3em; text-transform: uppercase; color: #f0cdb8;
 }
-.rsvp iframe { margin-top: 10px; border-radius: 4px; border: 1px solid rgba(240, 205, 184, .4); background: #fff; }
 .rsvp-hint {
   margin-top: 20px; color: #e0c3b3; font-size: 12px; line-height: 1.6;
   text-shadow: 0 2px 12px rgba(24, 10, 8, .9);
@@ -462,6 +479,72 @@ main { position: relative; z-index: 2; }
 .rsvp-hint code {
   padding: 1px 5px; border-radius: 3px; font-size: 11px; color: #fff6ec;
   background: rgba(28, 12, 10, .5);
+}
+.rsvp-sent {
+  margin-top: 16px; color: #fdf0e4; font-family: var(--ital); font-style: italic;
+  font-size: 16px; text-shadow: 0 2px 14px rgba(24, 10, 8, .9);
+}
+
+.rsvp-form {
+  margin-top: 16px; display: flex; flex-direction: column; gap: 14px;
+  text-align: left;
+}
+.rf-field { display: flex; flex-direction: column; gap: 6px; }
+.rf-field > span {
+  font-size: 11px; font-weight: 600; letter-spacing: .12em; text-indent: .12em;
+  text-transform: uppercase; color: #e0c3b3;
+  text-shadow: 0 2px 10px rgba(24, 10, 8, .9);
+}
+.rf-row { display: flex; gap: 10px; }
+.rf-row .rf-field { flex: 1; }
+
+.rf-field input[type='text'],
+.rf-field input[type='number'],
+.rf-field select,
+.rf-field textarea {
+  width: 100%; padding: 10px 12px; border-radius: 6px; font: inherit; font-size: 14px;
+  color: #fffaf4; background: rgba(28, 12, 10, .34);
+  border: 1px solid color-mix(in srgb, var(--gold-lt) 34%, transparent);
+  backdrop-filter: blur(3px);
+  transition: border-color 200ms var(--ease), background 200ms var(--ease);
+}
+.rf-field input::placeholder, .rf-field textarea::placeholder { color: #cba898; }
+.rf-field input:focus, .rf-field select:focus, .rf-field textarea:focus {
+  outline: none; border-color: var(--gold-lt); background: rgba(28, 12, 10, .5);
+}
+.rf-field textarea { resize: vertical; min-height: 64px; }
+/* Dark background, light text: without this the closed <select> box inherits
+   our dark theme fine, but the open options list falls back to the OS's
+   default (often light-on-light), unreadable against the same dark styling. */
+.rf-field select { color-scheme: dark; }
+.rf-field select option { background: #2a120f; color: #fdf0e4; }
+
+.rf-toggle { display: flex; flex-wrap: wrap; gap: 8px; }
+.rf-pill {
+  padding: 9px 16px; border-radius: 999px; cursor: pointer; font: inherit;
+  font-size: 12.5px; font-weight: 500; color: #fdf0e4;
+  background: rgba(28, 12, 10, .3);
+  border: 1px solid color-mix(in srgb, var(--gold-lt) 40%, transparent);
+  transition: background 200ms var(--ease), border-color 200ms var(--ease), transform 200ms var(--ease);
+}
+.rf-pill:hover { background: rgba(28, 12, 10, .5); border-color: var(--gold-lt); }
+.rf-pill.on {
+  background: var(--accent); color: #fff;
+  border-color: color-mix(in srgb, var(--gold-lt) 60%, var(--accent));
+  transform: translateY(-1px);
+  animation: pill-pick .48s var(--spring);
+}
+@keyframes pill-pick {
+  0%   { transform: scale(1) translateY(0); }
+  45%  { transform: scale(1.14) translateY(-4px); }
+  100% { transform: scale(1) translateY(-1px); }
+}
+
+.rf-submit { align-self: flex-start; margin-top: 2px; }
+.rf-submit:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+.rf-error {
+  color: #f6c9c0; font-size: 12.5px;
+  text-shadow: 0 2px 10px rgba(24, 10, 8, .9);
 }
 
 .sign-off {

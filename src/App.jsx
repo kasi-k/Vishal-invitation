@@ -7,6 +7,11 @@ import Invitation from './components/Invitation.jsx';
 export default function App() {
   const [open, setOpen] = useState(false);
   const [introUnmounted, setIntroUnmounted] = useState(false);
+  // A counter, not a boolean: Petals' burst effect re-fires on any change to
+  // this value, so it can be bumped again later (on a successful RSVP)
+  // without needing `open` itself to toggle off and back on.
+  const [burstSeq, setBurstSeq] = useState(0);
+  const celebrate = () => setBurstSeq((s) => s + 1);
 
   useEffect(() => {
     const s = document.documentElement.style;
@@ -36,9 +41,11 @@ export default function App() {
     if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) setOpen(true);
   }, []);
 
+  useEffect(() => { if (open) celebrate(); }, [open]);
+
   return (
     <>
-      <Petals burst={open} />
+      <Petals burst={burstSeq} />
       {!introUnmounted && (
         <Intro
           onStartOpen={() => setOpen(true)}
@@ -48,7 +55,7 @@ export default function App() {
 
       <div className={`page${open ? ' open' : ''}`}>
         <main>
-          <Invitation open={open} />
+          <Invitation open={open} onCelebrate={celebrate} />
         </main>
       </div>
     </>

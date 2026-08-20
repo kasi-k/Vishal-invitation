@@ -3,6 +3,7 @@ import Script from './Script.jsx';
 import Tracked from './Tracked.jsx';
 import Countdown from './Countdown.jsx';
 import Actions from './Actions.jsx';
+import Rsvp from './Rsvp.jsx';
 import { useReveal } from '../hooks/useReveal.js';
 
 // The whole invitation, in one section, set directly on the painted scene.
@@ -10,7 +11,7 @@ import { useReveal } from '../hooks/useReveal.js';
 // The crest carries the full names and each family, so the couple is named once
 // and in full; the body below is only what follows from that — the message, the
 // when and where, and how to reply.
-export default function Invitation({ open }) {
+export default function Invitation({ open, onCelebrate }) {
   const [bodyRef, bodyShown] = useReveal({ threshold: 0.01, rootMargin: '0px 0px 50px 0px' });
   const isShown = open || bodyShown;
 
@@ -84,18 +85,7 @@ export default function Invitation({ open }) {
           <Countdown startsAt={event.startsAt} />
           <Actions event={event} />
 
-          {event.rsvpFormUrl ? (
-            <div className="rsvp">
-              <h3>RSVP</h3>
-              <iframe title="RSVP form" src={event.rsvpFormUrl} loading="lazy"
-                      width="100%" height="620" frameBorder="0">Loading…</iframe>
-            </div>
-          ) : (
-            <p className="rsvp-hint">
-              To collect replies, paste your Google Form link into <code>event.rsvpFormUrl</code>
-              {' '}in <code>src/data.js</code>.
-            </p>
-          )}
+          <Rsvp event={event} onCelebrate={onCelebrate} />
 
           <p className="sign-off">{invite.awaiting}</p>
           <p className="guests">{invite.guests}</p>

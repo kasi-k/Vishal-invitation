@@ -33,5 +33,5 @@ export const event = {
   endsAt: '2026-08-30T22:00:00+05:30',
   address: 'ITC Grand Chola, 63, Anna Salai, Guindy, Chennai, Tamil Nadu 600032',
   mapQuery: 'ITC Grand Chola, Guindy, Chennai',
-  rsvpFormUrl: '',   // paste the Google Form link here
+  rsvpScriptUrl: 'https://script.google.com/macros/s/AKfycbwPnroR75L-uV8GY4WLDZS0G7oGdjqjL5pEejSPzpR0NChuBglu4Xd8N5_4tgcy7UoU-g/exec',   // paste the deployed Google Apps Script web app URL here
 };
