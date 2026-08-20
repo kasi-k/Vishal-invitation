@@ -4,7 +4,6 @@ dist/
 # Regenerated from the PDF by `npm run assets`
 assets/raw/
 assets/plates/
-assets/cutouts/
 assets/fonts/
 assets/shots/
 public/assets/
