@@ -1,0 +1,601 @@
+/* ============================================================================
+   Vishal & Malarvizhi — engagement invitation
+   Light, festive, ornament-led. All motion is CSS/SVG; nothing needs a GPU
+   feature beyond ordinary compositing.
+   ========================================================================== */
+
+:root {
+  color-scheme: light;
+  /* set from the active theme in App.jsx */
+  /* rose gold on blush ivory — the single template; see src/theme/themes.js */
+  --page: #fbf1ee;  --wash: #f3e3de;  --surface: #fffbf9;
+  --deep: #5e2a33;  --text: #48222a;  --dim: #9a767b;
+  --line: #e6cac2;  --gold: #c1897d;  --accent: #b76e79;
+  --gold-lt: #f2d3c8;  --gold-dk: #8f5a57;
+
+  /* the couple illustration: silks take the theme, skin and hair do not */
+  --saree: var(--accent);
+  --saree-lt: #dfa89c;
+  --ink-line: color-mix(in srgb, var(--deep) 62%, #3a1d22);
+
+  --leaf: #7d8a6a;      --leaf-dk: #5d6a4e;
+  --marigold: #e0a48c;  --marigold-dk: #c07d6c;
+  --clay: #a9705c;      --clay-lt: #c48d78;  --clay-dk: #7d4f40;
+
+  --serif: 'Cinzel', Georgia, serif;
+  --script: 'Rouge Script', cursive;
+  --hand: 'Great Vibes', cursive;
+  --body: 'Hind', system-ui, -apple-system, sans-serif;
+  --ital: 'PT Sans', Georgia, serif;
+
+  --ease: cubic-bezier(.22, .61, .36, 1);
+  --slow: cubic-bezier(.16, .84, .28, 1);
+  --spring: cubic-bezier(.34, 1.56, .64, 1);
+}
+
+* { margin: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--page);
+  color: var(--text);
+  font-family: var(--body);
+  font-weight: 400;
+  font-size: clamp(15px, 1.15vw, 17px);
+  line-height: 1.75;
+  letter-spacing: .008em;
+  text-rendering: optimizeLegibility;
+  font-kerning: normal;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  transition: background 700ms var(--ease);
+}
+body.locked { overflow: hidden; height: 100%; }
+
+/* The page ground is a frame from the film, blurred well past recognition, with
+   a theme-tinted wash over it. The cross-hatch weave that used to be here read as
+   graph paper; this keeps the warmth of the temple light the film was shot in. */
+body::before {
+  content: ''; position: fixed; inset: -4%; z-index: -2; pointer-events: none;
+  background: url('/media/backdrop.webp') center / cover no-repeat;
+  opacity: .55;
+  animation: driftbg 44s ease-in-out infinite alternate;
+}
+@keyframes driftbg {
+  from { transform: scale(1) translate3d(0, 0, 0); }
+  to   { transform: scale(1.08) translate3d(-1.5%, -1%, 0); }
+}
+body::after {
+  content: ''; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+  background:
+    radial-gradient(120% 80% at 50% 0%, color-mix(in srgb, var(--page) 62%, transparent), color-mix(in srgb, var(--page) 92%, transparent) 55%),
+    radial-gradient(100% 70% at 50% 100%, color-mix(in srgb, var(--accent) 12%, transparent), transparent 62%),
+    linear-gradient(180deg, color-mix(in srgb, var(--page) 86%, transparent), color-mix(in srgb, var(--page) 94%, transparent));
+}
+
+img { display: block; max-width: 100%; }
+button { font: inherit; color: inherit; }
+
+/* ---- animation primitives ------------------------------------------------ */
+
+/* every animated SVG path carries pathLength="1", so one rule drives them all */
+.draw {
+  stroke-dasharray: 1; stroke-dashoffset: 1;
+  transition: stroke-dashoffset 1.5s var(--ease);
+  transition-delay: calc(var(--i, 0) * .07s);
+}
+.in .draw, .open .draw { stroke-dashoffset: 0; }
+.draw.slow { transition-duration: 2.1s; }
+
+.pop {
+  opacity: 0; transform: scale(.4); transform-box: fill-box; transform-origin: center;
+  transition: opacity .5s var(--spring), transform .5s var(--spring);
+  transition-delay: calc(.9s + var(--i, 0) * .06s);
+}
+.in .pop, .open .pop { opacity: 1; transform: none; }
+
+/* ink arriving: a feathered mask twice the element's width slides across it */
+.write {
+  -webkit-mask-image: linear-gradient(90deg, #000 0 38%, transparent 62%);
+  mask-image: linear-gradient(90deg, #000 0 38%, transparent 62%);
+  -webkit-mask-size: 260% 100%; mask-size: 260% 100%;
+  -webkit-mask-position: 100% 0; mask-position: 100% 0;
+  -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat;
+  transition: -webkit-mask-position 1.7s var(--slow), mask-position 1.7s var(--slow);
+  transition-delay: var(--wd, 0s);
+}
+.in .write, .open .write { -webkit-mask-position: 0 0; mask-position: 0 0; }
+
+
+
+/* ---- tracked caps -------------------------------------------------------- */
+/* Each word is one unbreakable run, so a line can only ever break at a space —
+   split per character and the browser will break between any two letters. */
+.tw { display: inline-block; white-space: nowrap; }
+.tsp { display: inline-block; width: .34em; }
+/* Only the very last letter of the run is trimmed. Letter-spacing adds a gap
+   after every character including the final one, which pushes centred text off
+   centre; trimming any earlier letter would eat the word spaces instead. */
+.tw:last-of-type .tl:last-child { margin-right: calc(var(--track, .5em) * -1); }
+
+/* ---- petals -------------------------------------------------------------- */
+.petals, .shower { position: fixed; inset: 0; pointer-events: none; overflow: hidden; }
+.petals { z-index: 4; }
+.shower { z-index: 60; }
+.petal {
+  position: absolute; top: -10vh; border-radius: 62% 8% 62% 8%;
+  opacity: .38; will-change: transform;
+  animation-name: fall; animation-timing-function: linear; animation-iteration-count: infinite;
+}
+.petal.round { border-radius: 50%; opacity: .26; }
+@keyframes fall {
+  0%   { transform: translate3d(0, -10vh, 0) rotate(0); opacity: 0; }
+  10%  { opacity: .38; }
+  90%  { opacity: .3; }
+  100% { transform: translate3d(var(--sway), 114vh, 0) rotate(var(--spin)); opacity: 0; }
+}
+.shower-petal {
+  top: -12vh; opacity: .8; animation-name: shower; animation-iteration-count: 1;
+  animation-timing-function: cubic-bezier(.3, .1, .5, 1); animation-fill-mode: forwards;
+}
+@keyframes shower {
+  0%   { transform: translate3d(0, -12vh, 0) rotate(0) scale(1.1); opacity: 0; }
+  8%   { opacity: 1; }
+  100% { transform: translate3d(var(--sway), 118vh, 0) rotate(var(--spin)) scale(.8); opacity: 0; }
+}
+
+/* ============================================================================
+   The invitation — one section: a pinned scene with the content set on it
+   ========================================================================== */
+.page {
+  position: relative;
+  z-index: 1;
+}
+
+main { position: relative; z-index: 2; }
+
+.invite {
+  position: relative; isolation: isolate;
+  /* `clip`, not `hidden`: the pinned scene carries a negative bottom margin, so
+     without containment it paints over whatever follows. `hidden` would contain
+     it but also makes this a scroll container, which kills the sticky. */
+  overflow: clip;
+}
+
+.scene-art {
+  position: sticky; top: 0; z-index: 0;
+  height: 100svh; margin-bottom: -100svh; overflow: hidden;
+}
+.scene-img {
+  width: 100%; height: 100%; object-fit: cover; object-position: 50% 50%;
+  background: url('/media/scene-tiny.webp') center / cover no-repeat;
+  transform: scale(1.06); opacity: 0;
+  transition: transform 1.8s var(--slow), opacity 1.4s var(--ease);
+}
+.invite.in .scene-img { opacity: 1; transform: scale(1); }
+
+/* The content sits straight on the painting, so this veil is what carries its
+   legibility — and it has to deepen down the page, because the content runs the
+   whole length of the scene rather than sitting in one lit band. */
+.scene-veil {
+  position: absolute; inset: 0;
+  background:
+    radial-gradient(64% 40% at 50% 42%, rgba(34, 14, 12, .5) 0%, rgba(34, 14, 12, .22) 62%, transparent 100%),
+    radial-gradient(92% 62% at 50% 46%, rgba(38, 16, 12, .42) 0%, rgba(38, 16, 12, .26) 50%, rgba(30, 12, 10, .68) 100%),
+    linear-gradient(180deg, rgba(30, 12, 10, .5), rgba(30, 12, 10, .12) 26%, rgba(28, 11, 9, .58) 62%, rgba(24, 9, 7, .86));
+}
+
+.invite-flow { position: relative; z-index: 1; }
+
+/* ---- the crest, over the pinned scene ------------------------------------ */
+.crest {
+  min-height: auto;
+  display: grid; place-content: center; justify-items: center;
+  padding: clamp(36px, 5.5svh, 60px) clamp(14px, 3.5vw, 40px) clamp(10px, 1.8svh, 20px);
+  text-align: center; max-width: 1060px; margin: 0 auto;
+}
+.ganesha-mark {
+  display: block; width: clamp(42px, 6.5vw, 62px); aspect-ratio: 220 / 315; margin: 0 auto 12px;
+  background-color: var(--gold-lt);
+  -webkit-mask: url('/assets/cutouts/ganesha-160.webp') center / contain no-repeat;
+  mask: url('/assets/cutouts/ganesha-160.webp') center / contain no-repeat;
+  filter: drop-shadow(0 2px 10px rgba(30, 12, 16, .55));
+  opacity: 0; transform: translateY(10px);
+  transition: opacity 1s var(--slow) .15s, transform 1s var(--slow) .15s;
+}
+.invite.in .ganesha-mark { opacity: 1; transform: none; }
+
+.crest-eyebrow {
+  --track: .5em;
+  font-family: var(--serif); font-size: clamp(10px, 1.5vw, 12.5px);
+  letter-spacing: .5em; text-indent: .5em; text-transform: uppercase;
+  color: #f2dcc6; margin-bottom: 4px; text-shadow: 0 2px 14px rgba(24, 10, 8, .9);
+}
+.crest-eyebrow .tl {
+  display: inline-block; opacity: 0; transform: translateY(9px);
+  transition: opacity .55s var(--ease), transform .55s var(--ease);
+  transition-delay: var(--wd, 0s);
+}
+.invite.in .crest-eyebrow .tl { opacity: 1; transform: none; }
+
+.crest-couple {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  justify-content: center;
+  gap: clamp(14px, 2.8vw, 40px);
+  width: 100%;
+  max-width: 1060px;
+  margin: clamp(10px, 1.8svh, 20px) auto 0;
+}
+
+.crest-couple .who {
+  flex: 1 1 0px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.names-wrap { position: relative; display: inline-block; max-width: 100%; }
+
+.crest-name {
+  font-family: var(--hand); font-weight: 400;
+  white-space: nowrap;
+  /* Great Vibes' swashes overrun the em box and the writing-on mask is the size
+     of that box, so a tight line-height shears the tops off the capitals */
+  line-height: 1.32; padding: .08em .04em 0;
+  font-size: clamp(22px, 3.6vw, 48px);
+  background: linear-gradient(100deg,
+    #fdeee2 0%, #fff6ee 26%, #ffffff 40%, #fff9f3 46%,
+    #ffe9da 56%, #fff6ee 74%, #fdeee2 100%);
+  background-size: 260% 100%; background-position: 130% 0;
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+  text-shadow: 0 5px 32px rgba(24, 10, 8, .6), 0 1px 3px rgba(24, 10, 8, .45);
+}
+.invite.in .crest-name { animation: shine 7s linear 2.4s infinite; }
+
+.crest-of {
+  font-family: var(--ital); font-style: italic; color: #ecd6c6;
+  font-size: clamp(11.5px, 1.4vw, 14px); line-height: 1.5; max-width: 32ch;
+  margin: 5px auto 0; text-shadow: 0 2px 14px rgba(24, 10, 8, .9);
+  opacity: 0; transform: translateY(8px);
+  transition: opacity .85s var(--slow), transform .85s var(--slow);
+  transition-delay: var(--d, 1.2s);
+}
+.invite.in .crest-of { opacity: 1; transform: none; }
+
+.crest-couple .crest-join {
+  align-self: center;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  color: var(--gold-lt);
+  opacity: 0; transform: translateY(10px);
+  transition: opacity .8s var(--slow) 1.45s, transform .8s var(--slow) 1.45s;
+  padding: 0 2px;
+  margin-top: -10px;
+}
+.invite.in .crest-join { opacity: 1; transform: none; }
+.crest-join-line {
+  display: block;
+  width: 1px;
+  height: clamp(18px, 3.4svh, 38px);
+  background: linear-gradient(180deg, transparent, currentColor, transparent);
+}
+.crest-join em {
+  font-family: var(--ital); font-style: italic; color: #f6d9c8;
+  font-size: clamp(13px, 1.6vw, 17px);
+  text-shadow: 0 2px 12px rgba(24, 10, 8, .9);
+}
+
+/* Small screens: one by one stacked layout */
+@media (max-width: 768px) {
+  .crest { padding: clamp(28px, 4svh, 48px) 14px clamp(8px, 1.5svh, 16px); }
+  .crest-couple {
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    margin-top: 10px;
+  }
+  .crest-couple .who {
+    width: 100%;
+    flex: none;
+  }
+  .crest-name {
+    font-size: clamp(30px, 8vw, 46px);
+    white-space: normal;
+  }
+  .crest-of {
+    font-size: clamp(12px, 3.4vw, 14.5px);
+    max-width: 36ch;
+    line-height: 1.5;
+    margin-top: 3px;
+  }
+  .crest-couple .crest-join {
+    flex-direction: row;
+    gap: 12px;
+    margin: 2px 0 4px;
+  }
+  .crest-join-line {
+    display: none;
+  }
+  .crest-join::before, .crest-join::after {
+    content: '';
+    width: clamp(28px, 10vw, 64px);
+    height: 1px;
+    background: linear-gradient(90deg, transparent, currentColor);
+  }
+  .crest-join::after {
+    background: linear-gradient(90deg, currentColor, transparent);
+  }
+  .crest-join em {
+    font-size: 15px;
+  }
+}
+
+.glints { position: absolute; inset: -6% -3%; pointer-events: none; }
+.glint {
+  position: absolute; left: var(--x); top: var(--y);
+  width: 14px; height: 14px; margin: -7px 0 0 -7px; opacity: 0;
+  background:
+    linear-gradient(#fff, #fff) center / 100% 1.5px no-repeat,
+    linear-gradient(#fff, #fff) center / 1.5px 100% no-repeat;
+  -webkit-mask: radial-gradient(closest-side, #000 0%, transparent 78%);
+  mask: radial-gradient(closest-side, #000 0%, transparent 78%);
+  filter: drop-shadow(0 0 6px rgba(255, 236, 208, .95));
+}
+.invite.in .glint { animation: glint 3.6s ease-in-out infinite; animation-delay: calc(2.6s + var(--i) * .42s); }
+@keyframes glint {
+  0%, 72%, 100% { opacity: 0; transform: scale(.3) rotate(0deg); }
+  80%           { opacity: 1; transform: scale(1) rotate(45deg); }
+  88%           { opacity: .5; transform: scale(.7) rotate(70deg); }
+}
+
+/* ---- the invitation itself, set on the scene ------------------------------ */
+/* No panel: the content sits directly on the painting, so the veil below has to
+   carry the legibility instead of a card background. */
+.body {
+  position: relative; z-index: 1;
+  width: min(92vw, 620px); margin: 0 auto;
+  padding: clamp(16px, 2.8svh, 32px) clamp(4px, 2vw, 20px) clamp(44px, 7svh, 72px);
+  text-align: center; color: #fdf0e4;
+  opacity: 0; transform: translateY(20px);
+  transition: opacity 1s var(--slow), transform 1s var(--slow);
+  container-type: inline-size;
+}
+.body.in { opacity: 1; transform: none; }
+
+.body [style*='--d'] {
+  opacity: 0; transform: translateY(14px);
+  transition: opacity .8s var(--slow), transform .8s var(--slow);
+  transition-delay: var(--d, 0s);
+}
+.body.in [style*='--d'] { opacity: 1; transform: none; }
+
+/* why */
+.note {
+  font-size: clamp(14px, 2.4cqw, 17px); line-height: 1.68; color: #fbeadb;
+  text-shadow: 0 2px 18px rgba(24, 10, 8, .85);
+}
+.note span { display: block; }
+
+.hair {
+  display: block;
+  width: min(100%, 130px);
+  height: 1px;
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--gold-lt) 50%, transparent), transparent);
+  margin: 20px auto;
+}
+
+/* when and where */
+.when-label {
+  font-family: var(--serif); font-weight: 600; font-size: clamp(9.5px, 1.7cqw, 11px);
+  letter-spacing: .38em; text-indent: .38em; text-transform: uppercase; color: #f0cdb8;
+  text-shadow: 0 2px 12px rgba(24, 10, 8, .9);
+}
+.when-date {
+  font-family: var(--hand); font-size: clamp(32px, 8cqw, 56px); line-height: 1.14;
+  color: #fffaf4; padding-top: .04em; margin-top: 1px;
+  text-shadow: 0 4px 26px rgba(24, 10, 8, .8);
+}
+.when-at {
+  font-weight: 600; font-size: clamp(13px, 2.5cqw, 15.5px); color: #fbeadb; margin-top: 2px;
+  text-shadow: 0 2px 14px rgba(24, 10, 8, .85);
+}
+.where {
+  margin-top: 10px; font-weight: 600; font-size: clamp(13px, 2.6cqw, 16px);
+  line-height: 1.5; color: #fffaf4; text-shadow: 0 2px 16px rgba(24, 10, 8, .85);
+}
+.where span { font-weight: 400; color: #e6cdbd; font-size: .88em; }
+
+/* reply */
+.cd { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: clamp(20px, 3.5vw, 30px); }
+.cd-cell {
+  min-width: 74px; padding: 10px 8px; border-radius: 3px;
+  background: rgba(28, 12, 10, .34);
+  border: 1px solid color-mix(in srgb, var(--gold-lt) 34%, transparent);
+  backdrop-filter: blur(3px);
+  opacity: 0; transform: translateY(14px);
+  transition: opacity .7s var(--slow), transform .7s var(--slow); transition-delay: var(--d);
+}
+.body.in .cd-cell { opacity: 1; transform: none; }
+.cd-num {
+  display: block; font-size: 26px; font-weight: 600; color: #fffaf4;
+  font-variant-numeric: tabular-nums; line-height: 1.05; letter-spacing: -.01em;
+}
+.cd-lbl {
+  display: block; margin-top: 3px; font-size: 9px; font-weight: 600;
+  letter-spacing: .22em; text-indent: .22em; text-transform: uppercase; color: #e0c3b3;
+}
+.cd-past { margin-top: 20px; color: #f6d9c8; font-family: var(--ital); font-style: italic; font-size: 17px; }
+
+.actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 20px; }
+.btn {
+  display: inline-flex; align-items: center; padding: 9px 16px; border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--gold-lt) 52%, transparent);
+  background: rgba(28, 12, 10, .3); color: #fdf0e4; backdrop-filter: blur(3px);
+  text-decoration: none; font-size: 12.5px; font-weight: 500; letter-spacing: .015em; cursor: pointer;
+  transition: background 220ms var(--ease), transform 220ms var(--ease), border-color 220ms var(--ease);
+}
+.btn:hover { background: rgba(28, 12, 10, .5); border-color: var(--gold-lt); transform: translateY(-2px); }
+.btn-solid {
+  background: var(--accent); border-color: color-mix(in srgb, var(--gold-lt) 60%, var(--accent));
+  color: #fff; font-weight: 600;
+}
+.btn-solid:hover { background: var(--accent); filter: brightness(1.1); }
+
+.rsvp { margin-top: 24px; }
+.rsvp h3 {
+  font-family: var(--serif); font-size: 11.5px; font-weight: 600;
+  letter-spacing: .3em; text-indent: .3em; text-transform: uppercase; color: #f0cdb8;
+}
+.rsvp iframe { margin-top: 10px; border-radius: 4px; border: 1px solid rgba(240, 205, 184, .4); background: #fff; }
+.rsvp-hint {
+  margin-top: 20px; color: #e0c3b3; font-size: 12px; line-height: 1.6;
+  text-shadow: 0 2px 12px rgba(24, 10, 8, .9);
+}
+.rsvp-hint code {
+  padding: 1px 5px; border-radius: 3px; font-size: 11px; color: #fff6ec;
+  background: rgba(28, 12, 10, .5);
+}
+
+.sign-off {
+  margin-top: 16px; font-family: var(--hand); line-height: 1.24;
+  font-size: clamp(24px, 5cqw, 36px); color: #f8dcc8;
+  text-shadow: 0 3px 22px rgba(24, 10, 8, .8);
+}
+.guests {
+  margin-top: 6px; color: #e0c3b3; font-weight: 600; font-size: 10.5px;
+  letter-spacing: .24em; text-indent: .24em; text-transform: uppercase;
+  text-shadow: 0 2px 12px rgba(24, 10, 8, .9);
+}
+
+.intro {
+  position: fixed; inset: 0; z-index: 50;
+  overflow: hidden; background: #140704;
+  transition: opacity .8s var(--ease);
+}
+
+/* darkened blur behind the film, so a portrait clip on a landscape screen has
+   somewhere to sit instead of being cropped through the faces */
+.intro::before {
+  content: ''; position: absolute; inset: 0;
+  background: url('/media/backdrop.webp') center / cover no-repeat;
+  filter: blur(12px) brightness(.5) saturate(.8); transform: scale(1.1);
+}
+.intro-done { opacity: 0; pointer-events: none; }
+
+.intro-video {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  /* full-bleed. The clip is 16:9, so it fills a laptop edge to edge; on a
+     portrait phone the sides crop, and the couple sits centre frame, so the
+     position stays centred rather than favouring the top. */
+  object-fit: cover; object-position: center;
+  transition: opacity 1.1s var(--ease), transform 1.6s var(--slow), filter 1.1s var(--ease);
+}
+/* The announcement is set over the film from the first frame — that overlay is
+   the opening shot, not a payoff withheld until the clip ends. It only fades up
+   from nothing on load. */
+.it-names, .it-when, .it-where, .it-rule { opacity: 0; }
+.intro-film .intro-video { opacity: 1; transform: scale(1); }
+.intro-title .intro-video, .intro-done .intro-video {
+  opacity: 0; transform: scale(1.12); filter: blur(14px);
+}
+
+/* a veil that deepens as the film ends, so light type reads over it */
+.intro-veil {
+  position: absolute; inset: 0; pointer-events: none;
+  background:
+    radial-gradient(88% 62% at 50% 52%, rgba(20, 8, 4, .48) 0%, rgba(20, 8, 4, .2) 46%, rgba(20, 8, 4, .62) 100%),
+    linear-gradient(180deg, rgba(20, 8, 4, .42), transparent 26%, transparent 58%, rgba(20, 8, 4, .68));
+  transition: background 1.2s var(--ease), opacity 1.2s var(--ease);
+}
+.intro-title .intro-veil, .intro-done .intro-veil {
+  background: linear-gradient(160deg, #2a1008, #140704 60%, #200c06);
+}
+
+.intro-words {
+  position: absolute; inset: 0; display: grid; place-content: center; justify-items: center;
+  gap: 10px; text-align: center; padding: 24px;
+}
+.it-rule {
+  display: block; width: clamp(90px, 22vw, 190px); height: 1px;
+  background: linear-gradient(90deg, transparent, var(--gold-lt), transparent);
+  transition: opacity .9s var(--ease) .1s;
+}
+.it-eyebrow {
+  font-family: var(--serif); font-size: clamp(11px, 2.4vw, 17px);
+  letter-spacing: .46em; text-indent: .46em; text-transform: uppercase;
+  color: #f6e2b4;
+  text-shadow: 0 2px 14px rgba(28, 12, 4, .85), 0 0 3px rgba(28, 12, 4, .6);
+}
+.it-eyebrow { --track: .46em; }
+.it-eyebrow .tl {
+  display: inline-block; opacity: 0; transform: translateY(10px);
+  transition: opacity .55s var(--ease), transform .55s var(--ease);
+  transition-delay: var(--wd, 0s);
+}
+
+.it-names {
+  font-family: var(--hand); font-weight: 400; line-height: 1.12;
+  font-size: clamp(46px, 12vw, 104px); color: #fdf1d8;
+  text-shadow: 0 4px 34px rgba(20, 8, 4, .72), 0 1px 3px rgba(20, 8, 4, .5);
+  transform: translateY(16px);
+  transition: opacity 1s var(--slow) .75s, transform 1s var(--slow) .75s;
+}
+.it-when {
+  font-family: var(--ital); font-style: italic; font-weight: 700;
+  color: #f7e6bd; font-size: clamp(13px, 2.2vw, 17px); letter-spacing: .04em;
+  text-shadow: 0 2px 12px rgba(28, 12, 4, .85);
+  transition: opacity .9s var(--ease) 1.15s;
+}
+.it-where {
+  font-family: var(--body); font-weight: 400; line-height: 1.55;
+  color: #f3e7d2; font-size: clamp(12px, 1.9vw, 15px); letter-spacing: .05em;
+  text-shadow: 0 2px 12px rgba(28, 12, 4, .8);
+  transition: opacity .9s var(--ease) 1.35s;
+}
+
+/* visible in every phase, including while the film runs */
+.intro .it-eyebrow .tl { opacity: 1; transform: none; }
+.intro .it-names { opacity: 1; transform: none; }
+.intro .it-when, .intro .it-where, .intro .it-rule { opacity: 1; }
+
+.intro-skip {
+  position: absolute; right: 18px; bottom: max(18px, env(safe-area-inset-bottom));
+  padding: 9px 18px; border-radius: 999px; cursor: pointer;
+  background: rgba(255, 252, 244, .14); color: #fdf1d8;
+  border: 1px solid rgba(253, 241, 216, .34);
+  font-size: 13px; letter-spacing: .06em; backdrop-filter: blur(6px);
+  transition: background 200ms var(--ease);
+}
+.intro-skip:hover { background: rgba(255, 252, 244, .26); }
+
+@media (prefers-reduced-motion: reduce) {
+  .intro-video { display: none; }
+  .intro, .intro-veil { transition: none; }
+}
+
+/* ---- reduced motion ------------------------------------------------------ */
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .petals, .shower { display: none; }
+  *, *::before, *::after {
+    animation-duration: .001ms !important; animation-iteration-count: 1 !important;
+    transition-duration: .001ms !important; transition-delay: 0s !important;
+  }
+  .page { opacity: 1; }
+  .draw { stroke-dashoffset: 0 !important; }
+  .write { -webkit-mask-image: none !important; mask-image: none !important; }
+  .glint { opacity: 0 !important; }
+  .body [style*='--d'], .ganesha-mark, .body, .cd-cell,
+  .crest-of, .crest-join, .crest-eyebrow .tl, .scene-img,
+  .it-names, .it-when, .it-where, .it-rule {
+    opacity: 1 !important; transform: none !important;
+  }
+}
