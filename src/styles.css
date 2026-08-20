@@ -43,7 +43,14 @@ html { scroll-behavior: smooth; overscroll-behavior-y: none; background: #140704
 
 body {
   overscroll-behavior-y: none;
-  background: var(--page);
+  /* Not var(--page) (the light theme colour): the fixed scene image covers
+     every pixel of this page for its entire length, so body's own paint is
+     never meant to be seen — except for a brief instant during Chrome's
+     mobile toolbar hide/show animation, where a `position: fixed` element can
+     visibly lag half a frame behind the resizing viewport. Whatever's behind
+     it flashes through right then, so it needs to match the scene, not the
+     page chrome. Same dark tone as html/.intro. */
+  background: #140704;
   color: var(--text);
   font-family: var(--body);
   font-weight: 400;
