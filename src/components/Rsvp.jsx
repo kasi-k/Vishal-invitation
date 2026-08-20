@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { googleCalendarUrl, downloadIcs } from '../lib/calendar.js';
 
 // Apps Script web apps don't send CORS headers back to a cross-origin fetch,
 // so the response is opaque either way — 'no-cors' just skips pretending we
@@ -23,6 +24,14 @@ export default function Rsvp({ event, onCelebrate }) {
   const [phone, setPhone] = useState('');
   const [message, setMessage] = useState('');
   const [status, setStatus] = useState('idle'); // idle | sending | sent | error
+  const [modalOpen, setModalOpen] = useState(false);
+
+  useEffect(() => {
+    if (!modalOpen) return;
+    const onKey = (e) => { if (e.key === 'Escape') setModalOpen(false); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [modalOpen]);
 
   if (!event.rsvpScriptUrl) {
     return (
@@ -50,26 +59,23 @@ export default function Rsvp({ event, onCelebrate }) {
         message: message.trim(),
       });
       setStatus('sent');
+      setModalOpen(true);
       onCelebrate?.();
     } catch {
       setStatus('error');
     }
   };
 
-  if (status === 'sent') {
-    return (
-      <div className="rsvp">
-        <h3>RSVP</h3>
-        <p className="rsvp-sent">
-          {attending === 'yes'
-            ? "Thank you — we can't wait to celebrate with you!"
-            : "Thank you for letting us know — you'll be missed."}
-        </p>
-      </div>
-    );
-  }
-
-  return (
+  const content = status === 'sent' ? (
+    <div className="rsvp">
+      <h3>RSVP</h3>
+      <p className="rsvp-sent">
+        {attending === 'yes'
+          ? "Thank you — we can't wait to celebrate with you!"
+          : "Thank you for letting us know — you'll be missed."}
+      </p>
+    </div>
+  ) : (
     <div className="rsvp">
       <h3>RSVP</h3>
       <form className="rsvp-form" onSubmit={submit}>
@@ -112,8 +118,7 @@ export default function Rsvp({ event, onCelebrate }) {
               <span>Vehicle</span>
               <select value={vehicle} onChange={(e) => setVehicle(e.target.value)}>
                 <option value="None">None</option>
-                <option value="Bike">Bike</option>
-                <option value="Cab">Cab</option>
+                <option value="Two Wheeler">Two Wheeler</option>
                 <option value="Four Wheeler">Four Wheeler</option>
               </select>
             </label>
@@ -136,5 +141,39 @@ export default function Rsvp({ event, onCelebrate }) {
         )}
       </form>
     </div>
+  );
+
+  return (
+    <>
+      {content}
+
+      {modalOpen && (
+        <div className="rf-modal-backdrop" onClick={() => setModalOpen(false)}>
+          <div className="rf-modal" role="dialog" aria-modal="true" aria-label="RSVP confirmation"
+               onClick={(e) => e.stopPropagation()}>
+            <button className="rf-modal-close" type="button" aria-label="Close"
+                    onClick={() => setModalOpen(false)}>×</button>
+            <p className="rf-modal-title">
+              {attending === 'yes' ? 'Thank you!' : 'We hear you.'}
+            </p>
+            <p className="rf-modal-msg">
+              {attending === 'yes'
+                ? "We can't wait to celebrate with you! Save the date so it doesn't slip by."
+                : "Thank you for letting us know — you'll be missed."}
+            </p>
+            {attending === 'yes' && (
+              <div className="rf-modal-cal">
+                <a className="btn" href={googleCalendarUrl(event)} target="_blank" rel="noreferrer">
+                  Add to Google Calendar
+                </a>
+                <button className="btn" type="button" onClick={() => downloadIcs(event)}>
+                  Apple / Outlook (.ics)
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </>
   );
 }

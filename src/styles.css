@@ -547,6 +547,49 @@ main { position: relative; z-index: 2; }
   text-shadow: 0 2px 10px rgba(24, 10, 8, .9);
 }
 
+/* Above .shower (z-index: 60) so the post-submit petal burst falls behind
+   the modal, not on top of it and blocking the calendar buttons. */
+.rf-modal-backdrop {
+  position: fixed; inset: 0; z-index: 70;
+  display: grid; place-items: center; padding: 24px;
+  background: rgba(16, 6, 5, .68); backdrop-filter: blur(4px);
+  animation: rf-fade .3s var(--ease);
+}
+@keyframes rf-fade { from { opacity: 0; } to { opacity: 1; } }
+
+.rf-modal {
+  position: relative; width: min(92vw, 380px);
+  padding: 34px 26px 28px; border-radius: 14px; text-align: center;
+  background: linear-gradient(165deg, #2c1310, #1c0b08);
+  border: 1px solid color-mix(in srgb, var(--gold-lt) 30%, transparent);
+  box-shadow: 0 24px 60px rgba(8, 3, 2, .6);
+  animation: rf-pop .42s var(--spring);
+}
+@keyframes rf-pop {
+  0%   { opacity: 0; transform: scale(.88) translateY(10px); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.rf-modal-close {
+  position: absolute; top: 10px; right: 12px; width: 30px; height: 30px;
+  display: grid; place-items: center; border-radius: 50%; cursor: pointer;
+  background: transparent; border: none; color: #e0c3b3; font-size: 20px; line-height: 1;
+  transition: background 180ms var(--ease), color 180ms var(--ease);
+}
+.rf-modal-close:hover { background: rgba(255, 255, 255, .08); color: #fdf0e4; }
+
+.rf-modal-title {
+  font-family: var(--hand); font-size: clamp(30px, 8vw, 40px); color: #fdf0e4;
+  text-shadow: 0 3px 20px rgba(24, 10, 8, .8);
+}
+.rf-modal-msg {
+  margin-top: 8px; color: #e6cdbd; font-size: 14px; line-height: 1.6;
+}
+.rf-modal-cal {
+  display: flex; flex-wrap: wrap; gap: 8px; justify-content: center;
+  margin-top: 20px;
+}
+
 .sign-off {
   margin-top: 16px; font-family: var(--hand); line-height: 1.24;
   font-size: clamp(24px, 5cqw, 36px); color: #f8dcc8;
