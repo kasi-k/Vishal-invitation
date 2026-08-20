@@ -186,9 +186,9 @@ main { position: relative; z-index: 2; }
 .scene-veil {
   position: absolute; inset: 0;
   background:
-    radial-gradient(64% 40% at 50% 42%, rgba(34, 14, 12, .5) 0%, rgba(34, 14, 12, .22) 62%, transparent 100%),
-    radial-gradient(92% 62% at 50% 46%, rgba(38, 16, 12, .42) 0%, rgba(38, 16, 12, .26) 50%, rgba(30, 12, 10, .68) 100%),
-    linear-gradient(180deg, rgba(30, 12, 10, .5), rgba(30, 12, 10, .12) 26%, rgba(28, 11, 9, .58) 62%, rgba(24, 9, 7, .86));
+    radial-gradient(64% 40% at 50% 42%, rgba(34, 14, 12, .34) 0%, rgba(34, 14, 12, .14) 62%, transparent 100%),
+    radial-gradient(92% 62% at 50% 46%, rgba(38, 16, 12, .28) 0%, rgba(38, 16, 12, .17) 50%, rgba(30, 12, 10, .46) 100%),
+    linear-gradient(180deg, rgba(30, 12, 10, .34) 0%, rgba(30, 12, 10, .08) 26%, rgba(28, 11, 9, .4) 62%, rgba(24, 9, 7, .6) 100%);
 }
 
 /* Guarantees the flow is at least as tall as the pinned scene (100svh) so the
@@ -217,7 +217,7 @@ main { position: relative; z-index: 2; }
 
 .crest-eyebrow {
   --track: .5em;
-  font-family: var(--serif); font-size: clamp(10px, 1.5vw, 12.5px);
+  font-family: var(--serif); font-size: clamp(12px, 2vw, 15px);
   letter-spacing: .5em; text-indent: .5em; text-transform: uppercase;
   color: #f2dcc6; margin-bottom: 4px; text-shadow: 0 2px 14px rgba(24, 10, 8, .9);
 }
@@ -273,6 +273,15 @@ main { position: relative; z-index: 2; }
   text-shadow: 0 5px 32px rgba(24, 10, 8, .6), 0 1px 3px rgba(24, 10, 8, .45);
 }
 .invite.in .crest-name { animation: shine 7s linear 2.4s infinite; }
+/* A light band sweeping across the gradient-clipped text — the gradient
+   itself (in .crest-name/.when-date) is static, this is what actually makes
+   it glitter. Referenced above but never defined until now, so the names'
+   shine has silently never played. */
+@keyframes shine {
+  0%   { background-position: 160% 0; }
+  50%  { background-position: -60% 0; }
+  100% { background-position: 160% 0; }
+}
 
 .crest-of {
   font-family: var(--ital); font-style: italic; color: #ecd6c6;
@@ -314,6 +323,10 @@ main { position: relative; z-index: 2; }
 /* Small screens: one by one stacked layout */
 @media (max-width: 768px) {
   .crest { padding: clamp(28px, 4svh, 48px) 14px clamp(8px, 1.5svh, 16px); }
+  /* The desktop size (clamp up to 15px) wraps "ENGAGEMENT CEREMONY" onto two
+     lines once the .5em letter-spacing no longer fits a narrow width — scale
+     both down together here so it stays one line down to small phones. */
+  .crest-eyebrow { --track: .38em; font-size: clamp(9px, 2.4vw, 11px); letter-spacing: .38em; text-indent: .38em; }
   .crest-couple {
     flex-direction: column;
     align-items: center;
@@ -410,7 +423,17 @@ main { position: relative; z-index: 2; }
   margin: 20px auto;
 }
 
-/* when and where */
+/* when and where — gated on .when-block.in (scroll-triggered, see
+   Invitation.jsx), not the shared .body.in that fires instantly on landing */
+.when-fade {
+  opacity: 0; transform: translateY(14px);
+  transition: opacity .8s var(--slow), transform .8s var(--slow);
+}
+.when-block.in .when-fade { opacity: 1; transform: none; }
+.when-label.when-fade { transition-delay: .05s; }
+.when-at.when-fade { transition-delay: .45s; }
+.where.when-fade { transition-delay: .6s; }
+
 .when-label {
   font-family: var(--serif); font-weight: 600; font-size: clamp(9.5px, 1.7cqw, 11px);
   letter-spacing: .38em; text-indent: .38em; text-transform: uppercase; color: #f0cdb8;
@@ -418,8 +441,19 @@ main { position: relative; z-index: 2; }
 }
 .when-date {
   font-family: var(--hand); font-size: clamp(32px, 8cqw, 56px); line-height: 1.14;
-  color: #fffaf4; padding-top: .04em; margin-top: 1px;
+  padding-top: .04em; margin-top: 1px;
+  background: linear-gradient(100deg,
+    #fdeee2 0%, #fff6ee 26%, #ffffff 40%, #fff9f3 46%,
+    #ffe9da 56%, #fff6ee 74%, #fdeee2 100%);
+  background-size: 260% 100%; background-position: 130% 0;
+  -webkit-background-clip: text; background-clip: text; color: transparent;
   text-shadow: 0 4px 26px rgba(24, 10, 8, .8);
+  opacity: 0; transform: translateY(16px) scale(.97);
+  transition: opacity 1s var(--slow) .15s, transform 1s var(--slow) .15s;
+}
+.when-block.in .when-date {
+  opacity: 1; transform: none;
+  animation: shine 7s linear 1s infinite;
 }
 .when-at {
   font-weight: 600; font-size: clamp(13px, 2.5cqw, 15.5px); color: #fbeadb; margin-top: 2px;
@@ -721,6 +755,7 @@ main { position: relative; z-index: 2; }
   .glint { opacity: 0 !important; }
   .body [style*='--d'], .ganesha-mark, .body, .cd-cell,
   .crest-of, .crest-join, .crest-eyebrow .tl, .scene-img,
+  .when-fade, .when-date,
   .it-names, .it-when, .it-where, .it-rule {
     opacity: 1 !important; transform: none !important;
   }

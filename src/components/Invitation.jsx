@@ -14,6 +14,12 @@ import { useReveal } from '../hooks/useReveal.js';
 export default function Invitation({ open, onCelebrate }) {
   const [bodyRef, bodyShown] = useReveal({ threshold: 0.01, rootMargin: '0px 0px 50px 0px' });
   const isShown = open || bodyShown;
+  // Unlike the rest of .body, this one stays gated purely on scroll — the
+  // crest is visible in the first viewport so its reveal plays on landing,
+  // but "Save the date" sits below the fold; if it rode `isShown` too it
+  // would fire (and finish) off-screen the instant the intro ends, so by the
+  // time a visitor scrolls down it would already look static.
+  const [whenRef, whenShown] = useReveal();
 
   return (
     <section className={`invite${open ? ' in' : ''}`} id="invitation">
@@ -75,12 +81,14 @@ export default function Invitation({ open, onCelebrate }) {
 
           <span className="hair" aria-hidden="true" />
 
-          <p className="when-label" style={{ '--d': '.2s' }}>Save the date</p>
-          <Script as="p" className="when-date" delay={0.3}>{event.dateLabel}</Script>
-          <p className="when-at" style={{ '--d': '.6s' }}>{event.timeLabel}</p>
-          <p className="where" style={{ '--d': '.75s' }}>
-            {event.venue}<br /><span>{event.city}</span>
-          </p>
+          <div className={`when-block${whenShown ? ' in' : ''}`} ref={whenRef}>
+            <p className="when-label when-fade">Save the date</p>
+            <p className="when-date">{event.dateLabel}</p>
+            <p className="when-at when-fade">{event.timeLabel}</p>
+            <p className="where when-fade">
+              {event.venue}<br /><span>{event.city}</span>
+            </p>
+          </div>
 
           <Countdown startsAt={event.startsAt} />
           <Actions event={event} />
