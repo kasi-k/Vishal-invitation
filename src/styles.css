@@ -162,22 +162,16 @@ main { position: relative; z-index: 2; }
 
 .invite {
   position: relative; isolation: isolate;
-  /* `clip`, not `hidden`: the pinned scene carries a negative bottom margin, so
-     without containment it paints over whatever follows. `hidden` would contain
-     it but also makes this a scroll container, which kills the sticky. */
-  overflow: clip;
 }
 
-.scene-art {
-  position: sticky; top: 0; z-index: 0;
-  /* svh, not dvh: dvh recalculates continuously as the mobile toolbar
-     animates in/out *during* the scroll gesture itself — for a sticky
-     element, a height (and release point) that keeps shifting mid-scroll
-     destabilizes the pin (it visibly detaches/collapses on real devices).
-     svh is a stable value computed once, at the cost of a small gap right
-     at the very bottom edge once the toolbar finishes hiding — worth it. */
-  height: 100svh; margin-bottom: -100svh; overflow: hidden;
-}
+/* Fixed, the same proven technique as .intro's backdrop — not sticky. .invite
+   is the entire page (nothing follows it), so the scene never actually needs
+   to release at a scroll point; sticky + a negative-margin release trick only
+   bought fragility (mobile toolbar show/hide interacting with the release
+   math caused it to visibly detach/collapse mid-scroll on real devices). A
+   plain `position: fixed` element just always covers the viewport, full stop
+   — no height math, no release point, nothing to destabilize. */
+.scene-art { position: fixed; inset: 0; z-index: 0; overflow: hidden; }
 .scene-img {
   width: 100%; height: 100%; object-fit: cover; object-position: 50% 50%;
   background: url('/media/scene-tiny.webp') center / cover no-repeat;
@@ -197,12 +191,7 @@ main { position: relative; z-index: 2; }
     linear-gradient(180deg, rgba(30, 12, 10, .34) 0%, rgba(30, 12, 10, .08) 26%, rgba(28, 11, 9, .4) 62%, rgba(24, 9, 7, .6) 100%);
 }
 
-/* Guarantees the flow is at least as tall as the pinned scene (100svh) so the
-   sticky release math above always has room to work — short content (e.g. no
-   RSVP iframe) would otherwise run out before the scene does, exposing the
-   plain page background below it. Must match .scene-art's unit (svh) or the
-   release point drifts out of sync. */
-.invite-flow { position: relative; z-index: 1; min-height: 100svh; }
+.invite-flow { position: relative; z-index: 1; }
 
 /* ---- the crest, over the pinned scene ------------------------------------ */
 .crest {
